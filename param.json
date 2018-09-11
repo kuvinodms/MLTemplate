@@ -1,0 +1,188 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "paths": [
+    "servicePackageLinkResourceProvider",
+    "servicePackageLinkBackgroundJobs"
+  ],
+  "parameters": {
+    "name": {
+      "value": "tip1"
+    },
+    "shortName": {
+      "value": "tip1"
+    },
+    "isInitialSetup": {
+      "value": "true"
+    },
+    "deployCerts": {
+      "value": "true"
+    },
+    "primaryLocationWithSpaces": {
+      "value": "west us"
+    },
+    "primaryLocation": {
+      "value": "westus"
+    },
+    "secondaryLocation": {
+      "value": "eastus"
+    },
+    "deployingLocation": {
+      "value": "westus"
+    },
+    "trafficPriority": {
+      "value": "1"
+    },
+    "AADAuthority": {
+      "value": "https://login.microsoftonline.com/"
+    },
+    "AzureResourceManagerResourceEndpoint": {
+      "value": "https://management.core.windows.net/"
+    },
+    "RuntimeBlueRidgeSuffix": {
+      "value": ".runtime.blueridge.ms"
+    },
+    "CosmosDbSuffix": {
+      "value": ".documents.azure.com:443/"
+    },
+    "ArmServicePrincipalApplicationCertificate": {
+      "value": "BlueRidgeTip"
+    },
+    "SSLCertificate": {
+      "value": "BlueRidge-SSLCert"
+    },
+    "BlueRidgeKeyVaultId": {
+      "value": "/subscriptions/90763c4c-0357-4a5f-b5a0-41f03cef4839/resourceGroups/blueridge-tip1-westus/providers/Microsoft.KeyVault/vaults/blueridge-tip1-westus"
+    },
+    "BlueRidgeClientTenantId": {
+      "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+    },
+    "MicrosoftBlueRidgeRpApplicationId": {
+      "value": "22e1e4e4-c5e2-4f4b-a00c-01349dcd6eb7"
+    },
+    "RpPrimaryResourceKeySigningKey": {
+            "reference": {
+              "keyVault": {          
+                "id": "/subscriptions/90763c4c-0357-4a5f-b5a0-41f03cef4839/resourceGroups/blueridge-tip1-westus/providers/Microsoft.KeyVault/vaults/blueridge-tip1-westus"
+              },
+              "secretName": "BlueRidgeRPPrimaryKey"
+            }
+    },
+    "RpSecondaryResourceKeySigningKey": {
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/90763c4c-0357-4a5f-b5a0-41f03cef4839/resourceGroups/blueridge-tip1-westus/providers/Microsoft.KeyVault/vaults/blueridge-tip1-westus"
+              },
+              "secretName": "BlueRidgeRPSecondaryKey"
+            }
+    },
+    "RpRuntimeResourceKeyDurationInMinutes": {
+      "value": "525600"
+    },
+    "ResourceProviderKeyVersion": {
+      "value": "1"
+    },
+    "ApiManagmentSkuName": {
+      "value": "Premium"
+    },
+    "ApiManagmentSkuCapacity": {
+      "value": "1"
+    },
+    "CosmosDBAccountOfferType": {
+      "value": "Standard"
+    },
+    "ApiManagementValidationKey": {
+      "value": ""
+    },
+    "BackgrounJobStorageSkuName": {
+      "value": "Standard_RAGRS"
+    },
+    "BackgrounJobStorageSkuTier": {
+      "value": "Standard"
+    },
+    "AppServicePlanSkuName": {
+      "value": "S3"
+    },
+    "AppServicePlanSkuTier": {
+      "value": "Standard"
+    },
+    "AppServicePlanSkuSize": {
+      "value": "S3"
+    },
+    "AppServicePlanSkuFamily": {
+      "value": "S"
+    },
+    "AppServicePlanSkuCapacity": {
+      "value": "1"
+    },
+    "EndpointSuffix": {
+      "value": "core.windows.net"
+    },
+    "servicePackageLinkResourceProvider": {
+      "value": "bin\\ResourceProvider.zip"
+    },
+    "servicePackageLinkBackgroundJobs": {
+      "value": "bin\\BackgroundJobs.zip"
+    },
+    "ApiMProxyCustomHostnameBase64EncodedPfxCertificate": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/90763c4c-0357-4a5f-b5a0-41f03cef4839/resourceGroups/blueridge-tip1-westus/providers/Microsoft.KeyVault/vaults/blueridge-tip1-westus"
+        },
+        "secretName": "BlueRidge-SSLCert"
+      }
+    },
+    "BusinessAppPlatformApiVersion": {
+      "value": "2016-11-01-alpha"
+    },
+    "BusinessAppPlatformEndpoint": {
+      "value": "https://tip1.api.bap.microsoft.com/"
+    },
+    "S2SRegistrations": {
+      "value": [
+        {
+          "displayName": "flow rp",
+          "clientAppId": "80cdf56d-7ca1-426f-a7d2-16a4dabef20d",
+          "servicePrincipalId": "bd1474ef-16ac-43c9-91e3-f5fdd6db7706",
+          "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+        },
+        {
+          "displayName": "flow worker rp",
+          "clientAppId": "7d02aba2-720f-4323-924b-4cb146937cd8",
+          "servicePrincipalId": "00cba014-8e6e-42b0-837e-6f2b95afa6f2",
+          "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+        }
+      ]
+    },
+    "NumberOfFunctionAppsPerUserPerEnvironment": {
+      "value": "5"
+    },
+    "NumberOfFunctionsPerFunctionApp": {
+      "value": "10"
+    },
+    "MinCleanFunctionAppPoolCountPerRegion": {
+      "value": "100"
+    },
+    "MaxFunctionAppCountPerSubscription": {
+      "value": "40000"
+    },
+    "NumberOfFunctionAppsToCreate": {
+      "value": "20"
+    },
+    "DaysToKeepFunctionApps": {
+      "value": "30"
+    },
+    "MaxResourceGroupCountPerSubscription": {
+      "value": "20"
+    },
+    "APIMApiName": {
+      "value": "BlueRidge Runtime"
+    },
+    "APIMApiOperationName": {
+      "value": "trigger"
+    },
+    "APIMProductName": {
+      "value": "BlueRidge"
+    }
+  }
+}
