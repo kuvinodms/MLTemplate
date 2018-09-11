@@ -1,0 +1,970 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string"
+    },
+    "shortName": {
+      "type": "string"
+    },
+    "isInitialSetup": {
+      "type": "string"
+    },
+    "deployCerts": {
+      "type": "string"
+    },
+    "primaryLocationWithSpaces": {
+      "type": "string"
+    },
+    "primaryLocation": {
+      "type": "string"
+    },
+    "secondaryLocation": {
+      "type": "string"
+    },
+    "deployingLocation": {
+      "type": "string"
+    },
+    "trafficPriority": {
+      "type": "string"
+    },
+    "servicePackageLinkResourceProvider": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of Resource Provider Package to be upgraded."
+      }
+    },
+    "servicePackageLinkBackgroundJobs": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of Background Jobs Package to be upgraded."
+      }
+    },
+    "AADAuthority": {
+      "type": "string",
+      "defaultValue": "https://login.microsoftonline.com/"
+    },
+    "AzureResourceManagerResourceEndpoint": {
+      "type": "string",
+      "defaultValue": "https://management.core.windows.net/"
+    },
+    "RuntimeBlueRidgeSuffix": {
+      "type": "string",
+      "defaultValue": ".runtime.blueridge.ms"
+    },
+    "CosmosDbSuffix": {
+      "type": "string",
+      "defaultValue": ".documents.azure.com:443/"
+    },
+    "ArmServicePrincipalApplicationCertificate": {
+      "type": "string"
+    },
+    "BlueRidgeKeyVaultId": {
+      "type": "string"
+    },
+    "BlueRidgeClientTenantId": {
+      "type": "string"
+    },
+    "MicrosoftBlueRidgeRpApplicationId": {
+      "type": "string"
+    },
+    "RpPrimaryResourceKeySigningKey": {
+      "type": "string"
+    },
+    "RpSecondaryResourceKeySigningKey": {
+      "type": "string"
+    },
+    "RpRuntimeResourceKeyDurationInMinutes": {
+      "type": "string"
+    },
+    "ResourceProviderKeyVersion": {
+      "type": "string"
+    },
+    "SSLCertificate": {
+      "type": "string"
+    },
+    "ApiManagmentSkuName": {
+      "type": "string"
+    },
+    "ApiManagmentSkuCapacity": {
+      "type": "string"
+    },
+    "CosmosDBAccountOfferType": {
+      "type": "string"
+    },
+    "ApiManagementValidationKey": {
+      "type": "string"
+    },
+    "BackgrounJobStorageSkuName": {
+      "type": "string"
+    },
+    "BackgrounJobStorageSkuTier": {
+      "type": "string"
+    },
+    "AppServicePlanSkuName": {
+      "type": "string"
+    },
+    "AppServicePlanSkuTier": {
+      "type": "string"
+    },
+    "AppServicePlanSkuSize": {
+      "type": "string"
+    },
+    "AppServicePlanSkuFamily": {
+      "type": "string"
+    },
+    "AppServicePlanSkuCapacity": {
+      "type": "string"
+    },
+    "EndpointSuffix": {
+      "type": "string"
+    },
+    "ApiMProxyCustomHostnameBase64EncodedPfxCertificate": {
+      "type": "string"
+    },
+    "BusinessAppPlatformApiVersion": {
+      "type": "string"
+    },
+    "BusinessAppPlatformEndpoint": {
+      "type": "string"
+    },
+    "S2SRegistrations": {
+      "type": "array"
+    },
+    "NumberOfFunctionAppsPerUserPerEnvironment": {
+      "type": "string"
+    },
+    "NumberOfFunctionsPerFunctionApp": {
+      "type": "string"
+    },
+    "MinCleanFunctionAppPoolCountPerRegion": {
+      "type": "string"
+    },
+    "MaxFunctionAppCountPerSubscription": {
+      "type": "string"
+    },
+    "NumberOfFunctionAppsToCreate": {
+      "type": "string"
+    },
+    "DaysToKeepFunctionApps": {
+      "type": "string"
+    },
+    "MaxResourceGroupCountPerSubscription": {
+      "type": "string"
+    },
+    "APIMApiName": {
+      "type": "string"
+    },
+    "APIMApiOperationName": {
+      "type": "string"
+    },
+    "APIMProductName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "WebAppNameRpToDeploy": "[concat('blueridge-', parameters('name'), '-rp-', parameters('deployingLocation'))]",
+    "WebAppNameJobsToDeploy": "[concat('blueridge-', parameters('name'), '-jobs-', parameters('deployingLocation'))]",
+    "ServerFarmForDeployingLocation": "[concat('blueridge-', parameters('name'), '-', parameters('deployingLocation'))]",
+    "APIMServiceName": "[concat('blueridge-', parameters('name'), '-', parameters('primaryLocation'))]"
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('deployCerts'),'true')]",
+      "comments": "Arm Certificate primary",
+      "apiVersion": "2016-03-01",
+      "name": "[concat(parameters('ArmServicePrincipalApplicationCertificate'), parameters('deployingLocation'))]",
+      "type": "Microsoft.Web/certificates",
+      "location": "[parameters('deployingLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('ServerFarmForDeployingLocation'))]"
+      ],
+      "properties": {
+        "keyVaultId": "[parameters('BlueRidgeKeyVaultId')]",
+        "keyVaultSecretName": "[parameters('ArmServicePrincipalApplicationCertificate')]",
+        "serverFarmId": "[resourceId(resourceGroup().name, 'Microsoft.Web/serverFarms/', variables('ServerFarmForDeployingLocation'))]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployCerts'),'true')]",
+      "comments": "SSL Certificate primary",
+      "apiVersion": "2016-03-01",
+      "name": "[concat(parameters('SSLCertificate'), parameters('deployingLocation'))]",
+      "type": "Microsoft.Web/certificates",
+      "location": "[parameters('deployingLocation')]",
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Web/serverFarms/', variables('ServerFarmForDeployingLocation'))]"
+      ],
+      "properties": {
+        "keyVaultId": "[parameters('BlueRidgeKeyVaultId')]",
+        "keyVaultSecretName": "[parameters('SSLCertificate')]",
+        "serverFarmId": "[resourceId(resourceGroup().name, 'Microsoft.Web/serverfarms', variables('ServerFarmForDeployingLocation'))]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('isInitialSetup'),'true'), equals(parameters('primaryLocation'), parameters('deployingLocation')))]",
+      "apiVersion": "2017-03-01",
+      "comments": "APIM",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/certificates', concat(parameters('SSLCertificate'), parameters('deployingLocation')))]"
+      ],
+      "location": "[parameters('primaryLocation')]",
+      "name": "[variables('APIMServiceName')]",
+      "properties": {
+        "publisherEmail": "apihubdev@microsoft.com",
+        "publisherName": "blueridge",
+        "notificationSenderEmail": "apimgmt-noreply@mail.windowsazure.com",
+        "hostnameConfigurations": [
+          {
+            "type": "Proxy",
+            "hostname": "[concat(parameters('name'), parameters('RuntimeBlueRidgeSuffix'))]",
+            "encodedCertificate": "[parameters('ApiMProxyCustomHostnameBase64EncodedPfxCertificate')]"
+          }
+        ],
+        "additionalLocations": [
+          {
+            "location": "[parameters('secondaryLocation')]",
+            "sku": {
+              "name": "[parameters('ApiManagmentSkuName')]",
+              "capacity": "[parameters('ApiManagmentSkuCapacity')]"
+            }
+          }
+        ],
+        "virtualNetworkConfiguration": null,
+        "customProperties": {
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "True",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "True",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": "True",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "True",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "True",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": "False"
+        },
+        "virtualNetworkType": "None",
+        "certificates": null
+      },
+      "scale": null,
+      "sku": {
+        "name": "[parameters('ApiManagmentSkuName')]",
+        "capacity": "[parameters('ApiManagmentSkuCapacity')]"
+      },
+      "tags": {},
+      "type": "Microsoft.ApiManagement/service",
+      "resources": [
+        {
+          "comments": "APIM-Product",
+          "type": "Microsoft.ApiManagement/service/products",
+          "name": "[concat(variables('APIMServiceName'), '/', parameters('APIMProductName'))]",
+          "apiVersion": "2018-01-01",
+          "scale": null,
+          "properties": {
+            "displayName": "[parameters('APIMProductName')]",
+            "description": "free open api",
+            "terms": null,
+            "subscriptionRequired": false,
+            "approvalRequired": null,
+            "subscriptionsLimit": null,
+            "state": "published"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]"
+          ],
+          "resources": [
+            {
+              "apiVersion": "2018-01-01",
+              "type": "Microsoft.ApiManagement/service/products/apis",
+              "name": "[concat(variables('APIMServiceName'), '/', parameters('APIMProductName'), '/', 'rp')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/products', variables('APIMServiceName'), parameters('APIMProductName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('APIMServiceName'), 'rp')]",
+              ]
+            }
+
+          ]
+        },
+        {
+          "comments": "APIM-Product-API",
+          "type": "Microsoft.ApiManagement/service/apis",
+          "name": "[concat(variables('APIMServiceName'), '/', 'rp')]",
+          "apiVersion": "2018-01-01",
+          "scale": null,
+          "properties": {
+            "displayName": "[parameters('APIMApiName')]",
+            "apiRevision": "1",
+            "description": "",
+            "serviceUrl": "[concat('http://', 'blueridge-', parameters('name'), '-rp-', parameters('primaryLocation'), '.azurewebsites.net')]",
+            "path": "",
+            "protocols": [
+              "http",
+              "https"
+            ],
+            "authenticationSettings": null,
+            "subscriptionKeyParameterNames": null
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]",
+            "[resourceId('Microsoft.ApiManagement/service/products', variables('APIMServiceName'), parameters('APIMProductName'))]"
+          ],
+          "resources": [
+            {
+              "apiVersion": "2018-01-01",
+              "type": "policies",
+              "name": "policy",
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('APIMServiceName'), 'rp')]",
+                "[resourceId('Microsoft.ApiManagement/service/products', variables('APIMServiceName'), parameters('APIMProductName'))]"
+              ],
+              "properties": {
+                "policyContent": "<policies> <inbound> <cors> <allowed-origins> <origin>*</origin> <!-- allow any --> </allowed-origins> <allowed-methods> <!-- allow any --> <method>*</method> </allowed-methods> <allowed-headers> <!-- allow any --> <header>*</header> </allowed-headers> </cors> <base /> </inbound> <backend> <base /> </backend> <outbound> <base /> </outbound> <on-error> <choose> <when condition=\"@((context.Api == null || context.Operation == null) && context.Request.Method == \"OPTIONS\")\"> <return-response> <set-status code=\"200\" reason=\"OK\" /> <set-header name=\"Access-Control-Allow-Methods\" exists-action=\"override\"> <value>GET, PUT, PATCH, DELETE, POST</value> </set-header> <set-header name=\"Access-Control-Allow-Origin\" exists-action=\"override\"> <value>*</value> </set-header> <set-header name=\"Access-Control-Max-Age\" exists-action=\"override\"> <value>3600</value> </set-header> </return-response> </when> </choose> <base /> </on-error> </policies>",
+                "contentFormat": "rawxml"
+              }
+            },
+            {
+              "comments": "APIM-Product-API-Operations",
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "name": "[concat(variables('APIMServiceName'), '/', 'rp', '/', parameters('APIMApiOperationName'))]",
+              "apiVersion": "2018-01-01",
+              "scale": null,
+              "properties": {
+                "displayName": "[parameters('APIMApiOperationName')]",
+                "method": "POST",
+                "urlTemplate": "[concat('/environments/{environmentName}/functiongroups/{functionApp}/functions/{functionName}/', parameters('APIMApiOperationName'))]",
+                "templateParameters": [
+                  {
+                    "name": "environmentName",
+                    "description": null,
+                    "type": "",
+                    "defaultValue": null,
+                    "required": true,
+                    "values": []
+                  },
+                  {
+                    "name": "functionApp",
+                    "description": null,
+                    "type": "",
+                    "defaultValue": null,
+                    "required": true,
+                    "values": []
+                  },
+                  {
+                    "name": "functionName",
+                    "description": null,
+                    "type": "",
+                    "defaultValue": null,
+                    "required": true,
+                    "values": []
+                  }
+                ],
+                "description": "",
+                "request": {
+                  "description": null,
+                  "queryParameters": [],
+                  "headers": [
+                    {
+                      "name": "Authorization",
+                      "description": null,
+                      "type": "string",
+                      "defaultValue": null,
+                      "required": true,
+                      "values": []
+                    }
+                  ],
+                  "representations": []
+                },
+                "responses": [],
+                "policies": null
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', variables('APIMServiceName'), 'rp')]",
+                "[resourceId('Microsoft.ApiManagement/service/products', variables('APIMServiceName'), parameters('APIMProductName'))]"
+              ],
+              "resources": [
+                {
+                  "comments": "APIM-Product-API-Operations-Policies",
+                  "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+                  "name": "[concat(variables('APIMServiceName'), '/', 'rp', '/', parameters('APIMApiOperationName'), '/', 'policy')]",
+                  "apiVersion": "2018-01-01",
+                  "scale": null,
+                  "properties": {
+                    "policyContent": "<policies> <inbound> <base /> <set-variable name=\"environmentName\" value=\"@(context.Request.MatchedParameters[\"environmentName\"])\" /> <set-variable name=\"functionApp\" value=\"@(context.Request.MatchedParameters[\"functionApp\"])\" /> <set-variable name=\"functionName\" value=\"@(context.Request.MatchedParameters[\"functionName\"])\" /> <set-variable name=\"blueRidgeRp\" value=\"@(\"{{BlueRidgeRPBase}}/environments/\" + ((string)context.Variables[\"environmentName\"]) + \"/functiongroups/\" + ((string)context.Variables[\"functionApp\"]) + \"/functions/\" + ((string)context.Variables[\"functionName\"]) + \"/trigger\")\" /> <!-- Authorization key: {Scheme}.{MD5(credential)}--> <set-variable name=\"authorizationKey\" value=\"@{ if (context.Request.Headers.ContainsKey(\"Authorization\")) { var authSplit = context.Request.Headers.GetValueOrDefault(\"Authorization\").Split(null); var authScheme = authSplit[0]; var authCredential = authSplit[1]; MD5 md5 = System.Security.Cryptography.MD5.Create(); byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(authCredential); byte[] hash = md5.ComputeHash(inputBytes); StringBuilder sb = new StringBuilder(authScheme); sb.Append('.'); for (int i = 0; i < hash.Length; i++) { sb.Append(hash[i].ToString(\"X2\")); } return sb.ToString(); } return \"\"; }\" /> <cache-lookup-value key=\"@(\"function-\" + context.Variables[\"blueRidgeRp\"] + context.Variables[\"authorizationKey\"])\" variable-name=\"urlResult\" /> <choose> <when condition=\"@(!context.Variables.ContainsKey(\"urlResult\"))\"> <!-- If the urlResult context variable doesn\u2019t exist, make an HTTP request to retrieve it. --> <retry condition=\"@(context.Variables.ContainsKey(\"tokens\") && (context.Variables[\"tokens\"] == null || ((IResponse)context.Variables[\"tokens\"]).StatusCode >= 500))\" count=\"1\" delta=\"1\" interval=\"1\" max-interval=\"2\" first-fast-retry=\"false\"> <send-request mode=\"new\" response-variable-name=\"tokens\" timeout=\"60\" ignore-error=\"true\"> <set-url>@((string)context.Variables[\"blueRidgeRp\"])</set-url> <set-method>POST</set-method> <set-header name=\"x-ms-correlation-request-id\" exists-action=\"override\"> <value>@(context.Request.Headers.GetValueOrDefault(\"x-ms-correlation-id\", context.Request.Headers.GetValueOrDefault(\"x-ms-client-request-id\", System.String.Empty)))</value> </set-header> <set-header name=\"Authorization\" exists-action=\"override\"> <value>@(context.Request.Headers.GetValueOrDefault(\"Authorization\", context.Request.Headers.GetValueOrDefault(\"Authorization\", System.String.Empty)))</value> </set-header> </send-request> </retry> <choose> <when condition=\"@(context.Variables.ContainsKey(\"tokens\") && context.Variables[\"tokens\"] != null && ((IResponse)context.Variables[\"tokens\"]).StatusCode >= 500)\"> <!-- HTTP 5xx --> <return-response> <set-status code=\"@(((IResponse)context.Variables[\"tokens\"]).StatusCode)\" /> <set-header name=\"Content-Type\" exists-action=\"override\"> <value>application/json</value> </set-header> <set-body>@(((IResponse)context.Variables[\"tokens\"]).Body.As<string>())</set-body> </return-response> </when> <when condition=\"@(context.Variables.ContainsKey(\"tokens\") && context.Variables[\"tokens\"] != null && ((IResponse)context.Variables[\"tokens\"]).StatusCode != 200)\"> <!-- HTTP 4xx --> <return-response> <set-status code=\"@(((IResponse)context.Variables[\"tokens\"]).StatusCode)\" /> <set-header name=\"Content-Type\" exists-action=\"override\"> <value>application/json</value> </set-header> <set-body>@(((IResponse)context.Variables[\"tokens\"]).Body.As<string>())</set-body> </return-response> </when> <otherwise /> </choose> <set-variable name=\"urlResult\" value=\"@{ var rawResult = ((IResponse)context.Variables[\"tokens\"]).Body.As<JObject>(); var url = rawResult[\"properties\"][\"trigger_url\"].ToString(); var firstSlash = url.IndexOf(\"/\", 9); var baseUrl = url.Substring(0, firstSlash); var path = url.Substring(firstSlash); return new JObject(new JProperty(\"baseUrl\", baseUrl), new JProperty(\"path\", path)); }\" /> <cache-store-value key=\"@(\"function-\" + context.Variables[\"blueRidgeRp\"] + context.Variables[\"authorizationKey\"])\" value=\"@((JObject)context.Variables[\"urlResult\"])\" duration=\"100000\" /> </when> </choose> <set-backend-service base-url=\"@(((JObject)context.Variables[\"urlResult\"])[\"baseUrl\"].ToString())\" /> <rewrite-uri template=\"@(((JObject)context.Variables[\"urlResult\"])[\"path\"].ToString())\" /> <set-header name=\"Content-Type\" exists-action=\"skip\"> <value>application/json</value> </set-header> </inbound> <backend> <base /> </backend> <outbound> <base /> </outbound> <on-error> <base /> </on-error> </policies>",
+                    "contentFormat": "rawxml"
+                  },
+                  "dependsOn": [
+                    "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]",
+                    "[resourceId('Microsoft.ApiManagement/service/apis', variables('APIMServiceName'), 'rp')]",
+                    "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('APIMServiceName'),'rp', parameters('APIMApiOperationName'))]",
+                    "[resourceId('Microsoft.ApiManagement/service/products', variables('APIMServiceName'), parameters('APIMProductName'))]",
+                    "[resourceId('Microsoft.ApiManagement/service/properties', variables('APIMServiceName'), 'blueridgerpbase')]"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "comments": "BlueRidgeBase property",
+          "type": "Microsoft.ApiManagement/service/properties",
+          "name": "[concat(variables('APIMServiceName'), '/', 'blueridgerpbase')]",
+          "apiVersion": "2018-01-01",
+          "scale": null,
+          "properties": {
+            "displayName": "BlueRidgeRPBase",
+            "value": "[concat('https://', 'blueridge-', parameters('name'), '-rp-', parameters('primaryLocation'), '.azurewebsites.net/providers/Microsoft.Functions')]",
+            "tags": null,
+            "secret": false
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.ApiManagement/service', variables('APIMServiceName'))]",
+            "[resourceId('Microsoft.ApiManagement/service/apis', variables('APIMServiceName'), 'rp')]",
+            "[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('APIMServiceName'),'rp', parameters('APIMApiOperationName'))]",
+            "[resourceId('Microsoft.ApiManagement/service/products', variables('APIMServiceName'), parameters('APIMProductName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "condition": "[equals(parameters('isInitialSetup'),'true')]",
+      "comments": "Cosmos DB",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "kind": "GlobalDocumentDB",
+      "name": "[concat('blueridge', parameters('name'), parameters('primaryLocation'))]",
+      "apiVersion": "2015-04-08",
+      "location": "[parameters('primaryLocation')]",
+      "tags": {
+        "defaultExperience": "DocumentDB"
+      },
+      "scale": null,
+      "properties": {
+        "databaseAccountOfferType": "[parameters('CosmosDBAccountOfferType')]",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session",
+          "maxIntervalInSeconds": 5,
+          "maxStalenessPrefix": 100
+        },
+        "DatabaseAccountCreateUpdateProperties": {
+          "locations": [
+            {
+              "locationName": "[parameters('primaryLocation')]",
+              "failoverPriority": 0
+            },
+            {
+              "locationName": "[parameters('secondaryLocation')]",
+              "failoverPriority": 1
+            }
+          ],
+          "enableAutomaticFailover": true
+        },
+        "name": "[concat('blueridge', parameters('name'))]"
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Resource Provider Primary",
+      "apiVersion": "2015-08-01",
+      "name": "[variables('WebAppNameRpToDeploy')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('deployingLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('ServerFarmForDeployingLocation'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', concat('blueridge', parameters('name'), parameters('primaryLocation')))]",
+        "[resourceId('Microsoft.Web/certificates', concat(parameters('SSLCertificate'), parameters('deployingLocation')))]",
+        "[resourceId('Microsoft.Web/certificates', concat(parameters('ArmServicePrincipalApplicationCertificate'), parameters('deployingLocation')))]"
+      ],
+      "tags": {
+        "displayName": "Website"
+      },
+      "properties": {
+        "name": "[variables('WebAppNameRpToDeploy')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ServerFarmForDeployingLocation'))]",
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "Staging",
+          "type": "slots",
+          "location": "[parameters('deployingLocation')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', variables('WebAppNameRpToDeploy'))]"
+          ],
+          "properties": {
+            "siteConfig": {
+              "appSettings": [
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.ApiManagementUrl",
+                  "value": "[concat('https://', parameters('name'), parameters('RuntimeBlueRidgeSuffix'))]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.ApiManagementValidationKey",
+                  "value": "[parameters('ApiManagementValidationKey')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.AadAuthority",
+                  "value": "[parameters('AadAuthority')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.ArmServicePrincipalApplicationCertificateThumbprint",
+                  "value": "[reference(resourceId('Microsoft.Web/certificates', concat(parameters('ArmServicePrincipalApplicationCertificate'), parameters('deployingLocation'))), '2016-03-01').Thumbprint]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.AzureResourceManagerResourceEndpoint",
+                  "value": "[parameters('AzureResourceManagerResourceEndpoint')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.BlueRidgeClientTenantId",
+                  "value": "[parameters('BlueRidgeClientTenantId')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.MicrosoftBlueRidgeRpApplicationId",
+                  "value": "[parameters('MicrosoftBlueRidgeRpApplicationId')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Audience",
+                  "value": "[concat('https://', parameters('name'), parameters('RuntimeBlueRidgeSuffix'))]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Data.StorageAuthorizationKey",
+                  "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', concat('blueridge', parameters('name'), parameters('primaryLocation'))), providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]).primaryMasterKey]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Data.StorageEndpointUrl",
+                  "value": "[concat('https://', 'blueridge', parameters('name'), parameters('primaryLocation'), parameters('CosmosDbSuffix'))]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.KeyVersion",
+                  "value": "[parameters('ResourceProviderKeyVersion')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.PrimaryResourceKeySigningKey",
+                  "value": "[parameters('RpPrimaryResourceKeySigningKey')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.SecondaryResourceKeySigningKey",
+                  "value": "[parameters('RpSecondaryResourceKeySigningKey')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.RuntimeResourceKeyDurationInMinutes",
+                  "value": "[parameters('RpRuntimeResourceKeyDurationInMinutes')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.SelfKeyIssuer",
+                  "value": "[concat('https://', parameters('name'), parameters('RuntimeBlueRidgeSuffix'))]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.BusinessAppPlatformApiVersion",
+                  "value": "[parameters('BusinessAppPlatformApiVersion')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.BusinessAppPlatformEndpoint",
+                  "value": "[parameters('BusinessAppPlatformEndpoint')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.PrimaryRegion",
+                  "value": "[parameters('primaryLocation')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.NumberOfFunctionAppsPerUserPerEnvironment",
+                  "value": "[parameters('NumberOfFunctionAppsPerUserPerEnvironment')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.NumberOfFunctionsPerFunctionApp",
+                  "value": "[parameters('NumberOfFunctionsPerFunctionApp')]"
+                },
+                {
+                  "name": "S2SRegistrations",
+                  "value": "[string(parameters('S2SRegistrations'))]"
+                },
+                {
+                  "name": "WEBSITE_LOAD_CERTIFICATES",
+                  "value": "*"
+                },
+                {
+                  "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                  "value": "6.9.1"
+                }
+              ],
+              "use32BitWorkerProcess": false,
+              "alwaysOn": true,
+              "autoSwapSlotName": "production"
+            },
+            "clientAffinityEnabled": false,
+            "clientCertEnabled": false
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites/hostNameBindings",
+              "name": "[concat(concat('blueridge-', parameters('name'), '-rp-', parameters('deployingLocation'), '/'), parameters('name'), '.admin.blueridge.ms')]",
+              "apiVersion": "2016-03-01",
+              "location": "[parameters('deployingLocation')]",
+              "properties": {
+                "sslState": "SniEnabled",
+                "thumbprint": "[reference(resourceId('Microsoft.Web/certificates', concat(parameters('SSLCertificate'), parameters('deployingLocation'))), '2016-03-01').Thumbprint]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameRpToDeploy'), 'Staging')]",
+                "[resourceId('Microsoft.Web/Sites', variables('WebAppNameRpToDeploy'))]",
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameRpToDeploy'), 'Staging')]",
+                "[concat('Microsoft.Web/Sites/', variables('WebAppNameRpToDeploy'), '/Slots/Staging')]",
+                "[resourceId('Microsoft.Web/Sites', variables('WebAppNameJobsToDeploy'))]",
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameJobsToDeploy'), 'Staging')]",
+                "[resourceId('Microsoft.Web/certificates/', concat(parameters('SSLCertificate'), parameters('deployingLocation')))]",
+                "[resourceId('Microsoft.Web/certificates/', concat(parameters('ArmServicePrincipalApplicationCertificate'), parameters('deployingLocation')))]",
+                "[resourceId('Microsoft.ApiManagement/service/properties', variables('APIMServiceName'), 'blueridgerpbase')]",
+                "WaitingForSlotSiteRestartFinishedJobs",
+                "WaitingForSlotSiteRestartFinishedRP"
+              ]
+            },
+            {
+              "apiVersion": "2015-08-01",
+              "type": "config",
+              "name": "logs",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameRpToDeploy'), 'Staging')]"
+              ],
+              "properties": {
+                "httpLogs": {
+                  "fileSystem": {
+                    "retentionInMb": 100,
+                    "retentionInDays": 30,
+                    "enabled": true
+                  }
+                }
+              }
+            },
+            {
+              "apiVersion": "2015-08-01",
+              "name": "MSDeploy",
+              "type": "Extensions",
+              "location": "[parameters('deployingLocation')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('WebAppNameRpToDeploy'))]",
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameRpToDeploy'), 'Staging')]",
+                "[concat('Microsoft.Web/Sites/', variables('WebAppNameRpToDeploy'), '/Slots/Staging')]",
+                "[concat('Microsoft.Web/Sites/', variables('WebAppNameRpToDeploy'), '/Slots/Staging/config/logs')]",
+                "WaitingForSlotSiteRestartFinishedRP"
+              ],
+              "tags": {
+                "displayName": "webDeploy"
+              },
+              "properties": {
+                "packageUri": "[parameters('servicePackageLinkResourceProvider')]",
+                "dbType": "None"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "comments": "Background Jobs Primary",
+      "apiVersion": "2015-08-01",
+      "name": "[variables('WebAppNameJobsToDeploy')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('deployingLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('ServerFarmForDeployingLocation'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', concat('blueridge', parameters('name'), parameters('primaryLocation')))]",
+        "[resourceId('Microsoft.Web/certificates', concat(parameters('ArmServicePrincipalApplicationCertificate'), parameters('deployingLocation')))]"
+      ],
+      "tags": {
+        "displayName": "Website"
+      },
+      "properties": {
+        "name": "[variables('WebAppNameJobsToDeploy')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ServerFarmForDeployingLocation'))]",
+        "clientAffinityEnabled": false,
+        "clientCertEnabled": false
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "Staging",
+          "type": "slots",
+          "location": "[parameters('deployingLocation')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', variables('WebAppNameJobsToDeploy'))]"
+          ],
+          "properties": {
+            "siteConfig": {
+              "appSettings": [
+                {
+                  "name": "Microsoft.Azure.BlueRidge.BackgroundJobs.Engine.RegionsToDeploy",
+                  "value": "[parameters('primaryLocationWithSpaces')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.BackgroundJobs.Engine.ShutdownFile",
+                  "value": "abc"
+                },
+                {
+                  "name": "Microsoft.WindowsAzure.ResourceStack.BackgroundJobs.MinCleanFunctionAppPoolCountPerRegion",
+                  "value": "[parameters('MinCleanFunctionAppPoolCountPerRegion')]"
+                },
+                {
+                  "name": "Microsoft.WindowsAzure.ResourceStack.BackgroundJobs.MaxFunctionAppCountPerSubscription",
+                  "value": "[parameters('MaxFunctionAppCountPerSubscription')]"
+                },
+                {
+                  "name": "Microsoft.WindowsAzure.ResourceStack.BackgroundJobs.NumberOfFunctionAppsToCreate",
+                  "value": "[parameters('NumberOfFunctionAppsToCreate')]"
+                },
+                {
+                  "name": "Microsoft.WindowsAzure.ResourceStack.BackgroundJobs.DaysToKeepFunctionApps",
+                  "value": "[parameters('DaysToKeepFunctionApps')]"
+                },
+                {
+                  "name": "Microsoft.WindowsAzure.ResourceStack.BackgroundJobs.MaxResourceGroupCountPerSubscription",
+                  "value": "[parameters('MaxResourceGroupCountPerSubscription')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.BackgroundJobs.StorageConnectionString",
+                  "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', concat('br', parameters('shortName'), 'jobs', parameters('primaryLocation')), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', concat('br', parameters('shortName'), 'jobs', parameters('primaryLocation'))), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ';EndpointSuffix=', parameters('EndpointSuffix'))]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.AadAuthority",
+                  "value": "[parameters('AadAuthority')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.ArmServicePrincipalApplicationCertificateThumbprint",
+                  "value": "[reference(resourceId('Microsoft.Web/certificates', concat(parameters('ArmServicePrincipalApplicationCertificate'), parameters('deployingLocation'))), '2016-03-01').Thumbprint]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.AzureResourceManagerResourceEndpoint",
+                  "value": "[parameters('AzureResourceManagerResourceEndpoint')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.BlueRidgeClientTenantId",
+                  "value": "[parameters('BlueRidgeClientTenantId')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Arm.MicrosoftBlueRidgeRpApplicationId",
+                  "value": "[parameters('MicrosoftBlueRidgeRpApplicationId')]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Data.StorageAuthorizationKey",
+                  "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', concat('blueridge', parameters('name'), parameters('primaryLocation'))), providers('Microsoft.DocumentDB', 'databaseAccounts').apiVersions[0]).primaryMasterKey]"
+                },
+                {
+                  "name": "Microsoft.Azure.BlueRidge.ResourceProvider.Data.StorageEndpointUrl",
+                  "value": "[concat('https://', 'blueridge', parameters('name'), parameters('primaryLocation'), parameters('CosmosDbSuffix'))]"
+                },
+                {
+                  "name": "WEBSITE_LOAD_CERTIFICATES",
+                  "value": "*"
+                },
+                {
+                  "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                  "value": "6.9.1"
+                }
+              ],
+              "use32BitWorkerProcess": false,
+              "alwaysOn": true,
+              "autoSwapSlotName": "production"
+            },
+            "clientAffinityEnabled": false,
+            "clientCertEnabled": false
+          },
+          "resources": [
+            {
+              "apiVersion": "2015-08-01",
+              "type": "config",
+              "name": "logs",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameJobsToDeploy'), 'Staging')]"
+              ],
+              "properties": {
+                "httpLogs": {
+                  "fileSystem": {
+                    "retentionInMb": 100,
+                    "retentionInDays": 30,
+                    "enabled": true
+                  }
+                }
+              }
+            },
+            {
+              "apiVersion": "2015-08-01",
+              "name": "MSDeploy",
+              "type": "Extensions",
+              "location": "[parameters('deployingLocation')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', variables('WebAppNameJobsToDeploy'))]",
+                "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameJobsToDeploy'), 'Staging')]",
+                "[concat('Microsoft.Web/Sites/', variables('WebAppNameJobsToDeploy'), '/Slots/Staging')]",
+                "[concat('Microsoft.Web/Sites/', variables('WebAppNameJobsToDeploy'), '/Slots/Staging/config/logs')]",
+                "WaitingForSlotSiteRestartFinishedJobs"
+              ],
+              "tags": {
+                "displayName": "webDeploy"
+              },
+              "properties": {
+                "packageUri": "[parameters('servicePackageLinkBackgroundJobs')]",
+                "dbType": "None"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "condition": "[equals(parameters('isInitialSetup'),'true')]",
+      "comments": "Background Job Storage Account",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "[parameters('BackgrounJobStorageSkuName')]",
+        "tier": "[parameters('BackgrounJobStorageSkuTier')]"
+      },
+      "kind": "Storage",
+      "name": "[concat('br', parameters('shortName'), 'jobs', parameters('primaryLocation'))]",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('primaryLocation')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "enabled": true
+            },
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "App Service Plan",
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "name": "[parameters('AppServicePlanSkuName')]",
+        "tier": "[parameters('AppServicePlanSkuTier')]",
+        "size": "[parameters('AppServicePlanSkuSize')]",
+        "family": "[parameters('AppServicePlanSkuFamily')]",
+        "capacity": "[parameters('AppServicePlanSkuCapacity')]"
+      },
+      "kind": "app",
+      "name": "[variables('ServerFarmForDeployingLocation')]",
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('deployingLocation')]",
+      "scale": null,
+      "properties": {
+        "name": "[variables('ServerFarmForDeployingLocation')]",
+        "workerTierName": null,
+        "adminSiteName": null,
+        "hostingEnvironmentProfile": null,
+        "perSiteScaling": false,
+        "reserved": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      },
+      "dependsOn": []
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('Wait-', copyIndex(), '-', uniqueString(variables('WebAppNameRpToDeploy')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('WebAppNameRpToDeploy'))]",
+        "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameRpToDeploy'), 'Staging')]",
+        "[concat('Microsoft.Web/Sites/', variables('WebAppNameRpToDeploy'), '/Slots/Staging')]",
+        "[concat('Microsoft.Web/Sites/', variables('WebAppNameRpToDeploy'), '/Slots/Staging/config/logs')]"
+      ],
+      "copy": {
+        "name": "WaitingForSlotSiteRestartFinishedRP",
+        "count": 10,
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [],
+          "outputs": {
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('Wait-', copyIndex(), '-', uniqueString(variables('WebAppNameJobsToDeploy')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('WebAppNameJobsToDeploy'))]",
+        "[resourceId('Microsoft.Web/Sites/Slots', variables('WebAppNameJobsToDeploy'), 'Staging')]",
+        "[concat('Microsoft.Web/Sites/', variables('WebAppNameJobsToDeploy'), '/Slots/Staging')]",
+        "[concat('Microsoft.Web/Sites/', variables('WebAppNameJobsToDeploy'), '/Slots/Staging/config/logs')]"
+      ],
+      "copy": {
+        "name": "WaitingForSlotSiteRestartFinishedJobs",
+        "count": 10,
+        "mode": "serial",
+        "batchSize": 1
+      },
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [],
+          "outputs": {
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('isInitialSetup'),'true')]",
+      "apiVersion": "2015-11-01",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "[concat('blueridge', parameters('name'))]",
+      "location": "global",
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Priority",
+        "dnsConfig": {
+          "relativeName": "[concat('blueridge', parameters('name'))]",
+          "ttl": 30
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-11-01",
+      "dependsOn": [
+        "[concat('Microsoft.Network/trafficManagerProfiles/', concat('blueridge', parameters('name')))]",
+        "[concat('Microsoft.Web/sites/', variables('WebAppNameRpToDeploy'))]"
+      ],
+      "location": "global",
+      "name": "[concat(concat('blueridge', parameters('name')), '/Endpoint', parameters('deployingLocation'))]",
+      "properties": {
+        "targetResourceId": "[resourceId('Microsoft.Web/Sites', variables('WebAppNameRpToDeploy'))]",
+        "endpointStatus": "Enabled",
+        "priority": "[parameters('trafficPriority')]"
+      },
+      "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints"
+    }
+  ]
+}
